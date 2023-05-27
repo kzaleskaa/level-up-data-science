@@ -1,6 +1,13 @@
 import pandas as pd
 import streamlit as st
 from sklearn import datasets
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 
 st.title("Streamlit example")
 
@@ -43,3 +50,43 @@ def add_method_parameters(method_name):
     return params
 
 classifier_params = add_method_parameters(classifier_name)
+
+
+# classifier
+def get_classifier(clf_name, params):
+    if clf_name == "KNN":
+        clf = KNeighborsClassifier(n_neighbors=params["K"])
+    elif clf_name == "SVM":
+        clf = SVC(C=params["C"])
+    else:
+        clf = RandomForestClassifier(n_estimators=params["n_estimators"], 
+                                     max_depth=params["max_depth"], random_state=40)
+        
+    return clf
+
+clf = get_classifier(classifier_name, classifier_params)
+
+# classification
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=40)
+
+clf.fit(X_train, y_train)
+y_pred = clf.predict(X_test)
+
+acc = accuracy_score(y_test, y_pred)
+st.write(f"Classifier = {classifier_name}")
+st.write(f"Accuracy = {acc}")
+
+# plot
+pca = PCA(2)
+X_projected = pca.fit_transform(X)
+
+x1 = X_projected[:, 0]
+x2 = X_projected[:, 1]
+
+fig = plt.figure()
+plt.scatter(x1, x2, c=y, alpha=0.8, cmap="viridis")
+plt.xlabel("Principal Component 1")
+plt.ylabel("Principal Component 2")
+plt.colorbar()
+
+st.pyplot(fig)
